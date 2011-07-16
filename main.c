@@ -67,7 +67,9 @@ int main(void) {
         SendBuf[n]='\0';
         n++;
       }
-      sleep(2);
+      if(cont==0) {
+        sleep(2);
+      }
       i=recv(s, RecvBuf, MAX, 0);
       if(DEBUG>0) printf("%d bytes received: \n%s\nConnectivity : %d\n", i, RecvBuf,cont);
       // Check for Ping-Pong
@@ -83,16 +85,8 @@ int main(void) {
       }
       if(DEBUG>0) printf("====- END -====\n\n");
 
-      if(strcmp("PING", Buff[6])==0) {
-        sprintf(SendBuf,"PONG %s\r\n", Buff[7]);
-        send(s,SendBuf,strlen(SendBuf),0);
-        if(write(s, SendBuf, MAX, 0)<0) {
-          perror("PING-PONG!");
-        }
-      }
-
-      if(strcmp("PING", Buff[0])==0) {
-        sprintf(SendBuf,"PONG %s\r\n", Buff[1]);
+      if(strcmp("PING", Buff[0])==0 || strcmp("PING", Buff[6])==0) {
+        sprintf(SendBuf,"PONG %s%s\r\n", Buff[1],Buff[7]);
         send(s,SendBuf,strlen(SendBuf),0);
         if(write(s, SendBuf, MAX, 0)<0) {
           perror("PING-PONG!");
@@ -100,16 +94,20 @@ int main(void) {
       }
 
       if(strncmp("%insult", Buff[4],7)==0) {
-        sleep(3); // Try to avoid flooding...
         if(n>4) {
-          sprintf(SendBuf,"PRIVMSG %s : %s!\r\n",CHAN, Buff[5]);
+          sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s says %s! (%n)\r\n",CHAN, Buff[0], Buff[5],n);
+        }
+        else {
+          sprintf(SendBuf,"PRIVMSG %s : %s, wtf is wrong with you, you are so fudge packing ignorant you ca not even provide me with a name to insult?  Jackass...\r\n",CHAN, Buff[0]);
         }
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Insult");
         }
+        sleep(3); // Try to avoid flooding...
       }
       if(strncmp("%quit", Buff[4],5)==0) {
-        sprintf(SendBuf,"QUIT :Requested...\r\n");
+        // ABORT! ABORT!
+        sprintf(SendBuf,"QUIT Requested... \r\n : Requested...\r\n");
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Quit Request");
         }
@@ -123,11 +121,11 @@ int main(void) {
         else cont++;
       }
       if(cont==1) {
-        //sleep(15);
         sprintf(SendBuf, "JOIN %s\r\n", CHAN);
         if(write(s, SendBuf, MAX, 0)<0) {
           perror("Join");
         }
+        sleep(3); // More flood protection
 /*
         sprintf(SendBuf, "PRIVMSG no2pencil : %s\r\n", MESSAGE);
         if(write(s, SendBuf, MAX, 0)<0) {
