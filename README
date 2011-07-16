@@ -4,5 +4,8 @@ This is the start of an irc bot, built in C using sockets.  Currently it will co
 
 INSTALLATION :
 
+USAGE :
+All custom values are in the vars.h header file.  In this file you can set bot name, irc channel, & irc server.
+
 -#2pencil- 
 July 17th, 2011
