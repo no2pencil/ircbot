@@ -108,6 +108,12 @@ int main(void) {
           perror("Insult");
         }
       }
+      if(strncmp("%quit", Buff[4],5)==0) {
+        sprintf(SendBuf,"QUIT QUIT Requested...\r\n");
+        if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+          perror("Quit Request");
+        }
+      }
 
       if(cont==0) {
         sprintf(SendBuf, "NICK %s\r\nUSER %s %s %s : TestBot \r\nJOIN %s\r\n", NICK, USER, IDENT, IDENT, CHAN);
