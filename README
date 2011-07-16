@@ -1,0 +1,8 @@
+ABOUT :
+
+This is the start of an irc bot, built in C using sockets.  Currently it will compile on both Windows & Linux, however it only functions with Linux networking sockets.
+
+INSTALLATION :
+
+-#2pencil- 
+July 17th, 2011
