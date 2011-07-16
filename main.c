@@ -109,7 +109,7 @@ int main(void) {
         }
       }
       if(strncmp("%quit", Buff[4],5)==0) {
-        sprintf(SendBuf,"QUIT QUIT Requested...\r\n");
+        sprintf(SendBuf,"QUIT Requested...\r\n");
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Quit Request");
         }

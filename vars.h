@@ -1,6 +1,6 @@
 // System items
 #define MAX  2048
-#define DEBUG 1
+#define DEBUG 0
 
 // Strings
 #define VER		".01"
