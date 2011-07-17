@@ -3,18 +3,18 @@
 #include <errno.h>
 #include <string.h>
 /* Load Networking Headers */
-#ifdef __WIN32
-  #include <winsock.h>          // for windows
-  #define socklen_t int
+#if defined(linux)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/un.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <arpa/inet.h> // for UNIX
+#include <netdb.h>
 #else
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <sys/ioctl.h>
-  #include <sys/un.h>
-  #include <net/if.h>
-  #include <netinet/in.h>
-  #include <arpa/inet.h>        // for UNIX
-  #include <netdb.h>
+#include <winsock.h> // for windows
+#define socklen_t int
 #endif
 
 #include "vars.h"
@@ -81,6 +81,11 @@ int main(void) {
         inc=0;  // reset the character coutner
         sprintf(insult[ins], "%s",TempBuff);
         ins++;  // incriment the string counter
+        while(inc<40) {
+          TempBuff[inc]='\0'; // Null the element
+          inc++;
+        }
+        inc=0; // reset the character counter, again
       }
     }
     
@@ -122,7 +127,7 @@ int main(void) {
         }
       }
 
-      if(strncmp("%help", Buff[4],5)==0) {
+      if(strncmp("help", Buff[4],4)==0) {
         sleep(2); // Try to avoid flooding...
         // Take a random chance at bothering to reply...
         for(ins=1;ins<13;ins++)inc=getrand(1,99);
@@ -134,7 +139,7 @@ int main(void) {
         }
       }
 
-      if(strncmp("%insult", Buff[4],7)==0) {
+      if(strncmp("insult", Buff[4],6)==0) {
         sleep(2); // Try to avoid flooding...
         sprintf(Buff[6],"%s",insult[getrand(1,44)]);
         if(Buff[6][0]=='\0') {
@@ -150,9 +155,11 @@ int main(void) {
 
       if(strncmp("%quit", Buff[4],5)==0) {
         // ABORT! ABORT!
-        sprintf(SendBuf,"QUIT Requested... \r\n : Requested...\r\n");
-        if(send(s,SendBuf,strlen(SendBuf),0)<0) {
-          perror("Quit Request");
+        if(strncmp("#dreamincode",Buff[3],12)!=0) { /* only quit if message is private */
+          sprintf(SendBuf,"QUIT Requested... \r\n : Requested...\r\n");
+          if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+            perror("Quit Request");
+          }
         }
       }
 
