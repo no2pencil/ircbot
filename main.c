@@ -18,14 +18,19 @@
 #endif
 
 #include "vars.h"
+#include "functions.h"
 
 int main(void) {
-    int i, n=0, s, ss, cont=0,pars_fl=0;
+    int i, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0;
     struct sockaddr_in addr;
     struct hostent *he;
     struct in_addr **addr_list;
     char SendBuf[MAX]={0}, RecvBuf[MAX]={0},Buff[8][40]={0},TempBuff[40]={0};
-    char * pvm; // Private Message
+    char ch='\0', insult[256][256]={0}, * pvm; // Private Message
+    FILE *fp;
+
+    // Before anything else, lets start that timer!
+    srand(time(NULL));
 
     if ((s=socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
@@ -58,6 +63,30 @@ int main(void) {
     }
 
     printf("Connected to %s.\n",SERVERHOST);
+
+    /* Set up all the insults */
+    fp=fopen(INSULT_FILE, "r");
+    if(!fp) {
+      perror("Insult file");
+    }
+
+    while(ch!=EOF) {
+      ch=fgetc(fp);
+      if(ch!='\n') {
+        TempBuff[inc]=ch;
+        printf("%c",TempBuff[inc]);
+        inc++;
+      }
+      else {
+        inc=0;  // reset the character coutner
+        sprintf(insult[ins], "%s",TempBuff);
+        ins++;  // incriment the string counter
+      }
+    }
+    
+    printf("Loaded insult text.\n");
+
+    fclose(fp);
 
     // parse socket
     while(i) {
@@ -93,18 +122,32 @@ int main(void) {
         }
       }
 
+      if(strncmp("%help", Buff[4],5)==0) {
+        sleep(2); // Try to avoid flooding...
+        // Take a random chance at bothering to reply...
+        for(ins=1;ins<13;ins++)inc=getrand(1,99);
+        if(inc>35) {
+          sprintf(SendBuf,"PRIVMSG %s : There is no help for you %s. \r\n",CHAN, Buff[0]);
+          if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+            perror("Help");
+          }
+        }
+      }
+
       if(strncmp("%insult", Buff[4],7)==0) {
-        if(n>4) {
-          sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s says %s! (%n)\r\n",CHAN, Buff[0], Buff[5],n);
+        sleep(2); // Try to avoid flooding...
+        sprintf(Buff[6],"%s",insult[getrand(1,44)]);
+        if(Buff[6][0]=='\0') {
+          sprintf(SendBuf,"PRIVMSG %s : Hey %s, why don't you do it yourself?!\r\n",CHAN, Buff[0]);
         }
         else {
-          sprintf(SendBuf,"PRIVMSG %s : %s, wtf is wrong with you, you are so fudge packing ignorant you ca not even provide me with a name to insult?  Jackass...\r\n",CHAN, Buff[0]);
+          sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s (courtesy %s)! \r\n",CHAN, Buff[5], Buff[6], Buff[0]);
         }
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Insult");
         }
-        sleep(3); // Try to avoid flooding...
       }
+
       if(strncmp("%quit", Buff[4],5)==0) {
         // ABORT! ABORT!
         sprintf(SendBuf,"QUIT Requested... \r\n : Requested...\r\n");

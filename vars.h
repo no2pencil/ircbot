@@ -9,9 +9,9 @@
 // Config items
 #define PORT            6667
 #define MESSAGE         "Yow!? Are we having fun yet?"
-#define SERVERHOST      "irc.he.net" //rapport.ix.us.dal.net"
+#define SERVERHOST 	"irc.he.net" //rapport.ix.us.dal.net"
 #define NICK            "no2BOT"
 #define USER            "numbah-too"
 #define IDENT           "no2Bot"
 #define CHAN            "#dreamincode"
-
+#define INSULT_FILE	"insults.txt"
