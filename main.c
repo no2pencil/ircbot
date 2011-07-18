@@ -26,8 +26,7 @@ int main(void) {
     struct hostent *he;
     struct in_addr **addr_list;
     char SendBuf[MAX]={0}, RecvBuf[MAX]={0},Buff[8][40]={0},TempBuff[40]={0};
-    char ch='\0', insult[256][256]={0}, * pvm; // Private Message
-    FILE *fp;
+    char ch='\0', *insults[MAX], * pvm; // Private Message
 
     // Before anything else, lets start that timer!
     srand(time(NULL));
@@ -64,34 +63,11 @@ int main(void) {
 
     printf("Connected to %s.\n",SERVERHOST);
 
-    /* Set up all the insults */
-    fp=fopen(INSULT_FILE, "r");
-    if(!fp) {
-      perror("Insult file");
+    /* Load Inuslts File */
+    if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
+    for(n=0;n<MAX;n++){
+      insults[n]=insult[n];
     }
-
-    while(ch!=EOF) {
-      ch=fgetc(fp);
-      if(ch!='\n') {
-        TempBuff[inc]=ch;
-        printf("%c",TempBuff[inc]);
-        inc++;
-      }
-      else {
-        inc=0;  // reset the character coutner
-        sprintf(insult[ins], "%s",TempBuff);
-        ins++;  // incriment the string counter
-        while(inc<40) {
-          TempBuff[inc]='\0'; // Null the element
-          inc++;
-        }
-        inc=0; // reset the character counter, again
-      }
-    }
-    
-    printf("Loaded insult text.\n");
-
-    fclose(fp);
 
     // parse socket
     while(i) {
@@ -127,15 +103,26 @@ int main(void) {
         }
       }
 
-      if(strncmp("help", Buff[4],4)==0) {
-        sleep(2); // Try to avoid flooding...
-        // Take a random chance at bothering to reply...
-        for(ins=1;ins<13;ins++)inc=getrand(1,99);
-        if(inc>35) {
-          sprintf(SendBuf,"PRIVMSG %s : There is no help for you %s. \r\n",CHAN, Buff[0]);
-          if(send(s,SendBuf,strlen(SendBuf),0)<0) {
-            perror("Help");
+      n=0;
+      while(n<12) {
+        if(strncmp("help", Buff[n],4)==0) {
+          sleep(2); // Try to avoid flooding...
+          // Take a random chance at bothering to reply...
+          for(ins=1;ins<13;ins++)inc=getrand(1,99);
+          if(inc>35) {
+            sprintf(SendBuf,"PRIVMSG %s : There is no help for you %s. \r\n",CHAN, Buff[0]);
+            if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+              perror("Help");
+            }
           }
+        }
+      }
+
+      if(strncmp("LOL", Buff[4],3)==0) {
+        sleep(2); // Try to avoid flooding...
+        sprintf(SendBuf,"PRIVMSG %s : (L)ick (O)ld (L)adies!!\r\n",CHAN);
+        if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+          perror("Lick Old Ladies");
         }
       }
 
@@ -150,6 +137,20 @@ int main(void) {
         }
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Insult");
+        }
+      }
+
+      if(strncmp("loadInsults", Buff[4],11)==0) {
+        /* Dynamically Load Inuslts File */
+        if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
+        else {
+          sprintf(SendBuf,"PRIVMSG %s : File loaded... \r\n ",Buff[0]);
+          for(n=0;n<MAX;n++){
+            insults[n]=insult[n];
+          }
+          if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+            perror("Load Insults");
+          }
         }
       }
 
