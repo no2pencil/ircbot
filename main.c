@@ -21,7 +21,7 @@
 #include "functions.h"
 
 int main(void) {
-    int i, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0;
+    int i, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0;
     struct sockaddr_in addr;
     struct hostent *he;
     struct in_addr **addr_list;
@@ -65,8 +65,10 @@ int main(void) {
 
     /* Load Inuslts File */
     if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
-    for(n=0;n<MAX;n++){
+    for(n=0;n<43;n++){
       insults[n]=insult[n];
+      printf("\n %d : %s\n",n,insult);
+      printf("\n %d : %s\n",n,insults);
     }
 
     // parse socket
@@ -78,6 +80,7 @@ int main(void) {
         n++;
       }
       if(cont==0) {
+        printf("zzZZzzZZ...\n");
         sleep(2);
       }
       i=recv(s, RecvBuf, MAX, 0);
@@ -95,7 +98,11 @@ int main(void) {
       }
       if(DEBUG>0) printf("====- END -====\n\n");
 
-      if(strcmp("PING", Buff[0])==0 || strcmp("PING", Buff[6])==0) {
+      printf("\nzzZZzzZZ....%d\n",png);
+      sleep(2);
+
+      if(strcmp("PING", Buff[png])==0) {
+        printf("\nPING Detected... Sending PONG! %s\n",Buff[1]);
         sprintf(SendBuf,"PONG %s%s\r\n", Buff[1],Buff[7]);
         send(s,SendBuf,strlen(SendBuf),0);
         if(write(s, SendBuf, MAX, 0)<0) {
@@ -116,6 +123,7 @@ int main(void) {
             }
           }
         }
+        n++;
       }
 
       if(strncmp("LOL", Buff[4],3)==0) {
@@ -128,9 +136,11 @@ int main(void) {
 
       if(strncmp("insult", Buff[4],6)==0) {
         sleep(2); // Try to avoid flooding...
-        sprintf(Buff[6],"%s",insult[getrand(1,44)]);
+	i=getrand(1,44);
+        sprintf(Buff[6],"%s",insult[i]);
         if(Buff[6][0]=='\0') {
           sprintf(SendBuf,"PRIVMSG %s : Hey %s, why don't you do it yourself?!\r\n",CHAN, Buff[0]);
+	  printf("Insult failed, loaded \n%d:%s\n",i,Buff[6]);
         }
         else {
           sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s (courtesy %s)! \r\n",CHAN, Buff[5], Buff[6], Buff[0]);
