@@ -7,5 +7,25 @@ INSTALLATION :
 USAGE :
 All custom values are in the vars.h header file.  In this file you can set bot name, irc channel, & irc server.
 
+FUNCTIONS :
+-----------
+Insult :
+/msg bot loadInsults
+This will load the insults.txt file
+
+With the insults file loaded,
+/msg bot insult $nick
+
+This will throw an insult at the nick, publicly in the channel, & display that it was from your nick.
+
+Actions :
+/msg bot loadActions
+This will load the actions.txt file
+
+This will listen to all text in the actions.txt file as a trigger.  Each item will have a random response.
+
+/msg bot %quit
+The bot will safely close.
+
 -#2pencil- 
 July 17th, 2011
