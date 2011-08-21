@@ -21,12 +21,22 @@
 #include "functions.h"
 
 int main(void) {
-    int i, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0;
+    int i, a=0, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0;
     struct sockaddr_in addr;
     struct hostent *he;
     struct in_addr **addr_list;
     char SendBuf[MAX]={0}, RecvBuf[MAX]={0},Buff[8][40]={0},TempBuff[40]={0};
     char ch='\0', *insults[MAX], * pvm; // Private Message
+    char *actions[MAX], * actn; 
+
+    /* Lame, I know */
+    sprintf(place[0],"face");
+    sprintf(place[1],"teeth");
+    sprintf(place[2],"ass");
+    sprintf(place[3],"head");
+    sprintf(place[4],"back");
+    sprintf(place[5],"neck");
+
 
     // Before anything else, lets start that timer!
     srand(time(NULL));
@@ -63,12 +73,19 @@ int main(void) {
 
     printf("Connected to %s.\n",SERVERHOST);
 
+    /* Load Action File */
+    //if(loadactions(ACTION_FILE)!=0) perror("Actions file");
+    for(n=0;n<43;n++) {
+      actions[n]=action[n];
+      printf("\n %d : %s\n",n,action);
+    }
+
     /* Load Inuslts File */
     if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
     for(n=0;n<43;n++){
       insults[n]=insult[n];
       printf("\n %d : %s\n",n,insult);
-      printf("\n %d : %s\n",n,insults);
+      //printf("\n %d : %s\n",n,insults);
     }
 
     // parse socket
@@ -134,6 +151,23 @@ int main(void) {
         }
       }
 
+      for(i=0;i<38;i++) {
+        for(n=0;n<12;n++) { 
+          if(actions[i][0]!='\0') {
+            if(strcmp(actions[i],Buff[n])==0) {
+              printf("Found %s in %s\n",actions[i],Buff[n]);
+              a=getrand(0,5);
+              sprintf(SendBuf,"PRIVMSG %s :\001ACTION %ss %s right in the %s!\r\n",CHAN, action[i], Buff[0],place[a]);
+              if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+                perror("Action");
+              }
+              n=1000;
+              i=1000;
+            }
+          }  
+        }
+      }
+
       if(strncmp("insult", Buff[4],6)==0) {
         sleep(2); // Try to avoid flooding...
 	i=getrand(1,44);
@@ -147,6 +181,19 @@ int main(void) {
         }
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Insult");
+        }
+      }
+
+      if(strncmp("loadActions", Buff[4],11)==0) {
+        if(loadactions(ACTION_FILE)!=0) perror("Actions file");
+        else {
+          sprintf(SendBuf,"PRIVMSG %s : Action File Loaded...\r\n",Buff[0]);
+          for(n=0;n<43;n++) {
+            actions[n]=action[n];
+          }
+          if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+            perror("Load Actions");
+          }
         }
       }
 
@@ -198,7 +245,7 @@ int main(void) {
           sprintf(TempBuff,"%c%c%c%c",Buff[4][1],Buff[4][2],Buff[4][3],Buff[4][4]);
           if(DEBUG>0) printf("PRIVMSG from %s\n",Buff[0]);
           if(strcmp("VERS", TempBuff)==0) {
-            sprintf(SendBuf, "NOTICE %s : \001VERSION %s : v%s : GHCi\001",Buff[0], VER_STR, VER);
+            sprintf(SendBuf, "NOTICE %s :\001VERSION %s : v%s : GHCi",Buff[0], VER_STR, VER);
             if(DEBUG>0) printf("Returning Version Request...\n");
             send(s,SendBuf,strlen(SendBuf),0);
             if(write(s, SendBuf, MAX, 0)<0) {
