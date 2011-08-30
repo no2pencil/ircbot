@@ -127,8 +127,45 @@ int main(void) {
         }
       }
 
-      n=0;
-      while(n<12) {
+/*
+====-DEBUG-====
+0: no2p
+1: no2pencil@mail.akroncdnr.com
+2: PRIVMSG
+3: #dreamincode
+4: oh
+5: fuck
+====- END -====
+*/
+
+      n=4;
+      while(n<28) {
+        if(strncmp("kool-aid",Buff[n],8)==0) {
+          for(ins=1;ins<13;ins++)inc=getrand(1,99);
+          if(inc>75) {
+            sprintf(SendBuf,"PRIVMSG %s : %s had better back the fuck off my kool-aid! \r\n",CHAN, Buff[0]);
+            if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+              perror("There was an error with your Kool-Aid");
+            }
+          }
+        }
+        if((strncmp("alive?",Buff[n],5)==0) || (strncmp("awake?",Buff[n],5)==0)) {
+          sleep(2); // Try to avoid flooding...
+          // Take a random chance at bothering to reply...
+          for(ins=1;ins<13;ins++)inc=getrand(1,99);
+          if(inc>35) {
+            sprintf(SendBuf,"PRIVMSG %s : Shhh %s! I'm require silence for fapping! \r\n",CHAN, Buff[0]);
+            if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+              perror("Help");
+            }
+          }
+          else {
+            sprintf(SendBuf,"PRIVMSG %s : Not now %s! I'm... bating! \r\n",CHAN, Buff[0]);
+            if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+              perror("Help");
+            }
+          }
+        }
         if(strncmp("help", Buff[n],4)==0) {
           sleep(2); // Try to avoid flooding...
           // Take a random chance at bothering to reply...
