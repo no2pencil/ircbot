@@ -20,14 +20,26 @@
 #include "vars.h"
 #include "functions.h"
 
-int main(void) {
-    int i, a=0, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0;
+int main(int argc, char *argv[]) {
+    int i, a=0, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0, DEBUG=0;
     struct sockaddr_in addr;
     struct hostent *he;
     struct in_addr **addr_list;
     char SendBuf[MAX]={0}, RecvBuf[MAX]={0},Buff[8][40]={0},TempBuff[40]={0};
     char ch='\0', *insults[MAX], * pvm; // Private Message
     char *actions[MAX], * actn; 
+
+    /* Check for DEBUG argument */
+    if(argc > 0) {
+      for(n=0;n<=sizeof(argv[1]);n++) {
+        sprintf(&TempBuff[n],"%c",toupper(argv[1][n]));
+      }
+      if(strncmp("DEBUG",TempBuff,5)==0) {
+        printf("enabling Debug...\n");
+        DEBUG=1;
+      }
+      n=0;
+    }
 
     /* Lame, I know */
     sprintf(place[0],"face");
