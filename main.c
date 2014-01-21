@@ -20,8 +20,11 @@
 #include "vars.h"
 #include "functions.h"
 
+void init_insults(int *i);
+
 int main(int argc, char *argv[]) {
-    int i, a=0, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0, DEBUG=0;
+    int i, a=0, n=0, s, ss, cont=0,pars_fl=0, ins=0, inc=0, png=0, opt=0;
+    bool DEBUG=false, INSULT=false;
     struct sockaddr_in addr;
     struct hostent *he;
     struct in_addr **addr_list;
@@ -29,29 +32,33 @@ int main(int argc, char *argv[]) {
     char ch='\0', *insults[MAX], * pvm; // Private Message
     char *actions[MAX], * actn; 
 
+    /* Before anything else, lets start that timer! */
+    srand(time(NULL));
+
     /* Check for DEBUG argument */
-    if(argc > 0) {
-      for(n=0;n<=sizeof(argv[1]);n++) {
-        sprintf(&TempBuff[n],"%c",toupper(argv[1][n]));
-      }
-      if(strncmp("DEBUG",TempBuff,5)==0) {
-        printf("enabling Debug...\n");
-        DEBUG=1;
+    if(argc > 1) {
+      /* Parse Arguments like a boss */
+      while((opt=getopt(argc, argv, "d:i:"))!=-1) {
+/*
+        switch(opt) {
+          case 'd':
+            printf("enabling Debug...\n");
+            DEBUG=true;
+          break;
+          case 'i':
+            INSULT=true;
+          break;
+        }
+*/
+        if(opt=='d') {
+          DEBUG=true;
+        }
+        if(opt=='i') {
+          INSULT=true;
+        }
       }
       n=0;
     }
-
-    /* Lame, I know */
-    sprintf(place[0],"face");
-    sprintf(place[1],"teeth");
-    sprintf(place[2],"ass");
-    sprintf(place[3],"head");
-    sprintf(place[4],"back");
-    sprintf(place[5],"neck");
-
-
-    // Before anything else, lets start that timer!
-    srand(time(NULL));
 
     if ((s=socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
@@ -86,18 +93,21 @@ int main(int argc, char *argv[]) {
     printf("Connected to %s.\n",SERVERHOST);
 
     /* Load Action File */
-    //if(loadactions(ACTION_FILE)!=0) perror("Actions file");
-    for(n=0;n<43;n++) {
-      actions[n]=action[n];
-      printf("\n %d : %s\n",n,action);
-    }
+    if(INSULT) {
+      init_insults(&n);
+      //if(loadactions(ACTION_FILE)!=0) perror("Actions file");
+      for(n=0;n<43;n++) {
+        actions[n]=action[n];
+        printf("\n %d : %s\n",n,action);
+      }
 
-    /* Load Inuslts File */
-    if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
-    for(n=0;n<43;n++){
-      insults[n]=insult[n];
-      printf("\n %d : %s\n",n,insult);
-      //printf("\n %d : %s\n",n,insults);
+      /* Load Inuslts File */
+      if(loadinsults(INSULT_FILE)!=0) perror("Insults file");
+      for(n=0;n<43;n++){
+        insults[n]=insult[n];
+        printf("\n %d : %s\n",n,insult);
+        //printf("\n %d : %s\n",n,insults);
+      }
     }
 
     // parse socket
@@ -113,19 +123,19 @@ int main(int argc, char *argv[]) {
         sleep(2);
       }
       i=recv(s, RecvBuf, MAX, 0);
-      if(DEBUG>0) printf("%d bytes received: \n%s\nConnectivity : %d\n", i, RecvBuf,cont);
+      if(DEBUG) printf("%d bytes received: \n%s\nConnectivity : %d\n", i, RecvBuf,cont);
       // Check for Ping-Pong
 
       pvm=strtok(RecvBuf," :!~\n");
       n=0;
-      if(DEBUG>0) printf ("\n\n====-DEBUG-====\n");
+      if(DEBUG) printf ("\n\n====-DEBUG-====\n");
       while(pvm!=NULL) {
-        if(DEBUG>0) printf ("%d: %s\n",n,pvm);
+        if(DEBUG) printf ("%d: %s\n",n,pvm);
         sprintf(Buff[n],"%s",pvm);
         pvm=strtok (NULL, " :!~\n");
         n++;
       }
-      if(DEBUG>0) printf("====- END -====\n\n");
+      if(DEBUG) printf("====- END -====\n\n");
 
       printf("\nzzZZzzZZ....%d\n",png);
       sleep(2);
@@ -200,18 +210,20 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      for(i=0;i<38;i++) {
-        for(n=0;n<12;n++) { 
-          if(actions[i][0]!='\0') {
-            if(strcmp(actions[i],Buff[n])==0) {
-              printf("Found %s in %s\n",actions[i],Buff[n]);
-              a=getrand(0,5);
-              sprintf(SendBuf,"PRIVMSG %s :\001ACTION %ss %s right in the %s!\r\n",CHAN, action[i], Buff[0],place[a]);
-              if(send(s,SendBuf,strlen(SendBuf),0)<0) {
-                perror("Action");
+      if(INSULT) {
+        for(i=0;i<38;i++) {
+          for(n=0;n<12;n++) { 
+            if(actions[i][0]!='\0') {
+              if(strcmp(actions[i],Buff[n])==0) {
+                printf("Found %s in %s\n",actions[i],Buff[n]);
+                a=getrand(0,5);
+                sprintf(SendBuf,"PRIVMSG %s :\001ACTION %ss %s right in the %s!\r\n",CHAN, action[i], Buff[0],place[a]);
+                if(send(s,SendBuf,strlen(SendBuf),0)<0) {
+                  perror("Action");
+                }
+                n=1000;
+                i=1000;
               }
-              n=1000;
-              i=1000;
             }
           }  
         }
@@ -219,14 +231,17 @@ int main(int argc, char *argv[]) {
 
       if(strncmp("insult", Buff[4],6)==0) {
         sleep(2); // Try to avoid flooding...
-	i=getrand(1,44);
-        sprintf(Buff[6],"%s",insult[i]);
-        if(Buff[6][0]=='\0') {
-          sprintf(SendBuf,"PRIVMSG %s : Hey %s, why don't you do it yourself?!\r\n",CHAN, Buff[0]);
-	  printf("Insult failed, loaded \n%d:%s\n",i,Buff[6]);
-        }
-        else {
-          sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s (courtesy %s)! \r\n",CHAN, Buff[5], Buff[6], Buff[0]);
+        if(INSULT) {
+	  i=getrand(1,44);
+          sprintf(Buff[6],"%s",insult[i]);
+          if(Buff[6][0]=='\0') {
+            sprintf(SendBuf,"PRIVMSG %s : Hey %s, why don't you do it yourself?!\r\n",CHAN, Buff[0]);
+	    printf("Insult failed, loaded \n%d:%s\n",i,Buff[6]);
+          } else {
+            sprintf(SendBuf,"PRIVMSG %s : Hey %s - %s (courtesy %s)! \r\n",CHAN, Buff[5], Buff[6], Buff[0]);
+          }
+        } else {
+          sprintf(SendBuf,"PRIVMSG %s : Insults are not current enabled! \r\n",Buff[0]);
         }
         if(send(s,SendBuf,strlen(SendBuf),0)<0) {
           perror("Insult");
@@ -292,10 +307,10 @@ int main(int argc, char *argv[]) {
 
         if(strcmp("PRIVMSG", Buff[2])==0) {
           sprintf(TempBuff,"%c%c%c%c",Buff[4][1],Buff[4][2],Buff[4][3],Buff[4][4]);
-          if(DEBUG>0) printf("PRIVMSG from %s\n",Buff[0]);
+          if(DEBUG) printf("PRIVMSG from %s\n",Buff[0]);
           if(strcmp("VERS", TempBuff)==0) {
             sprintf(SendBuf, "NOTICE %s :\001VERSION %s : v%s : GHCi",Buff[0], VER_STR, VER);
-            if(DEBUG>0) printf("Returning Version Request...\n");
+            if(DEBUG) printf("Returning Version Request...\n");
             send(s,SendBuf,strlen(SendBuf),0);
             if(write(s, SendBuf, MAX, 0)<0) {
               perror("version");
@@ -303,8 +318,8 @@ int main(int argc, char *argv[]) {
           }
 
           if(strcmp("PING",TempBuff)==0) {
-            sprintf(SendBuf,"NOTICE %s : PONG %s\r\n",Buff[0],VER);
-            if(DEBUG>0) printf("Returning Ping Request...\n");
+            sprintf(SendBuf,"NOTICE %s : PONG \r\n",Buff[0]);
+            if(DEBUG) printf("Returning Ping Request...\n");
             send(s,SendBuf,strlen(SendBuf),0);
             if(write(s, SendBuf, MAX, 0)<0) {
               perror("PING-PONG!");
@@ -319,4 +334,17 @@ int main(int argc, char *argv[]) {
 
     if(s) close(s);
     return 0;
+}
+
+void init_insults(int *i) {
+    printf("Passed : %c\n", *i); 
+    /* Lame, I know */
+    /*
+    sprintf(place[0],"face");
+    sprintf(place[1],"teeth");
+    sprintf(place[2],"ass");
+    sprintf(place[3],"head");
+    sprintf(place[4],"back");
+    sprintf(place[5],"neck");
+    */
 }
