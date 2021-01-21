@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 /* Load Networking Headers */
-#if defined(linux)
+#if defined(linux) || defined(__FreeBSD__)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -12,8 +12,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h> // for UNIX
 #include <netdb.h>
-#else
-#include <winsock.h> // for windows
+#endif
+#if defined(__WIN32__) || defined(__WIN64__)
+#include <winsock.h> // for windows tcp/ip socket
 #define socklen_t int
 #endif
 
